@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .login-container {
+            text-align: center;
+        }
+
+        #name-input {
+            padding: 10px;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        #enter-chat {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h1>Enter Your Name</h1>
+        <input type="text" id="name-input" placeholder="Enter your name">
+        <button id="enter-chat">Enter Chat</button>
+    </div>
+
+    <script>
+        // List of predefined colors
+        const colors = ['#FF5733', '#33FF57', '#3357FF', '#F5FF33', '#FF33A1', '#33FFF8'];
+
+        // Function to get a color based on username
+        function getColorForUsername(username) {
+            const index = Array.from(username).reduce((sum, char) => sum + char.charCodeAt(0), 0);
+            return colors[index % colors.length];
+        }
+
+        document.getElementById('enter-chat').addEventListener('click', function() {
+            const name = document.getElementById('name-input').value.trim();
+            if (name) {
+                const userColor = getColorForUsername(name);
+                localStorage.setItem('username', name);
+                localStorage.setItem('userColor', userColor);
+                window.location.href = 'chat.html';
+            } else {
+                alert('Please enter a name.');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: url('https://i.pinimg.com/originals/e4/fa/06/e4fa061200efe8e8b35955892e984e60.gif') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            width: 80%;
+            max-width: 800px;
+            height: 80vh;
+            border: 1px solid #ccc;
+            background-color: transparent;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: transparent;
+        }
+
+        #message-input {
+            width: calc(100% - 90px);
+            padding: 10px;
+            margin-right: 5px;
+        }
+
+        #send-message {
+            padding: 10px 20px;
+        }
+
+        .message {
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        #online-list {
+            margin-top: 10px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+            color: #fff;
+        }
+
+        #online-list h2 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        #online-list ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #online-list li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <input type="text" id="message-input" placeholder="Type a message...">
+        <button id="send-message">Send</button>
+        <div id="online-list">
+            <h2>Online Users</h2>
+            <ul id="online-users"></ul>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+        import { getDatabase, ref, push, onValue, set, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrcTz_2VcqxQlShpuAG3TITCXyLhkKPm0",
+            authDomain: "madoo-881af.firebaseapp.com",
+            databaseURL: "https://madoo-881af-default-rtdb.firebaseio.com",
+            projectId: "madoo-881af",
+            storageBucket: "madoo-881af.appspot.com",
+            messagingSenderId: "1085549920919",
+            appId: "1:1085549920919:web:9c982dfb36bc07e0e9dfd2",
+            measurementId: "G-2DKVPQNETL"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        // References
+        const messagesRef = ref(database, 'messages');
+        const onlineUsersRef = ref(database, 'onlineUsers');
+
+        // Retrieve username and color from localStorage
+        const username = localStorage.getItem('username');
+        const userColor = localStorage.getItem('userColor');
+
+        // Add current user to the online list
+        if (username) {
+            const userRef = ref(database, `onlineUsers/${username}`);
+            set(userRef, username);
+
+            // Ensure user is removed from online list on disconnect
+            onDisconnect(userRef).remove();
+
+            // Update the online users list
+            function updateOnlineUsers() {
+                const onlineUsersList = document.getElementById('online-users');
+                onlineUsersList.innerHTML = '';
+
+                onValue(onlineUsersRef, (snapshot) => {
+                    onlineUsersList.innerHTML = '';
+
+                    snapshot.forEach((childSnapshot) => {
+                        const user = childSnapshot.val();
+                        if (user === username) {
+                            const userElement = document.createElement('li');
+                            userElement.textContent = user;
+                            onlineUsersList.appendChild(userElement);
+                        }
+                    });
+                });
+            }
+
+            updateOnlineUsers();
+        }
+
+        // Sending a message
+        document.getElementById('send-message').addEventListener('click', () => {
+            const message = document.getElementById('message-input').value;
+            if (message.trim() !== "" && username) {
+                push(messagesRef, {
+                    text: message,
+                    user: username,
+                    color: userColor,
+                    timestamp: Date.now()
+                });
+                document.getElementById('message-input').value = '';
+            }
+        });
+
+        // Receiving messages
+        onValue(messagesRef, (snapshot) => {
+            const messagesContainer = document.getElementById('messages');
+            messagesContainer.innerHTML = '';
+            snapshot.forEach((childSnapshot) => {
+                const messageData = childSnapshot.val();
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message';
+                messageElement.innerHTML = `<span style="color: ${messageData.color}; font-weight: bold;">${messageData.user}:</span> ${messageData.text}`;
+                messagesContainer.appendChild(messageElement);
+            });
+        });
+
+        // Remove the user from online list when the page is closed
+        window.addEventListener('beforeunload', () => {
+            if (username) {
+                const userRef = ref(database, `onlineUsers/${username}`);
+                remove(userRef);
+            }
+        });
+    </script>
+</body>
+</html>
